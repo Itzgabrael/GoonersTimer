@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gooners</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Stop Gooning</h1>
+
+  <button id="themeToggle">Toggle</button>
+
+  <div id="users"></div>
+
+  <h2>The Longest Gooning Streak</h2>
+  <ul id="leaderboard"></ul>
+</div>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyB07JnV7Z4htpw492PzAR8k4SC50w5fsd8",
+  authDomain: "gabby-4cd1d.firebaseapp.com",
+  projectId: "gabby-4cd1d",
+  storageBucket: "gabby-4cd1d.firebasestorage.app",
+  messagingSenderId: "7443064108",
+  appId: "1:7443064108:web:230e794c7b95d25082f889",
+  measurementId: "G-RQDN4QCWX5"
+};
+window.db = db;
+window.ref = ref;
+window.set = set;
+window.onValue = onValue;
+</script>
+<script src="site.js"></script>
+</body>
+</html>

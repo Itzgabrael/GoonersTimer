@@ -1,0 +1,47 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: #fff;
+  transition: 0.3s;
+}
+
+body.light {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  text-align: center;
+}
+
+.user {
+  border: 1px solid #444;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.reset {
+  background: crimson;
+  color: white;
+  border: none;
+}
+
+.pulse {
+  animation: pulse 0.4s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
