@@ -1,3 +1,9 @@
+const userPins = {
+  Gabriel: "0314",
+  Wisdom: "2009",
+  Kelvin: "8080",
+  Ezekiel: "9999"
+};
 function showConfirm(name) {
   currentUserToReset = name;
 
@@ -37,15 +43,22 @@ function confirmReset() {
 
   const user = data[currentUserToReset];
 
+  // ASK FOR PIN
+  const enteredPin = prompt(`Enter passcode for ${currentUserToReset}:`);
+
+  if (enteredPin !== userPins[currentUserToReset]) {
+    alert("Wrong passcode. You cannot reset this timer.");
+    return;
+  }
+
   const now = Date.now();
   const currentStreak = now - user.start;
 
-  // 🔥 ALWAYS calculate best BEFORE resetting
+  // save best BEFORE reset
   if (!user.best || currentStreak > user.best) {
     user.best = currentStreak;
   }
 
-  // reset streak AFTER saving best
   user.start = Date.now();
 
   save();
@@ -151,14 +164,6 @@ function save() {
   set(ref(db, "streakData"), data);
 
   updateLeaderboard();
-  onValue(ref(db, "streakData"), (snapshot) => {
-  const firebaseData = snapshot.val();
-
-  if (firebaseData) {
-    data = firebaseData;
-    updateLeaderboard();
-  }
-});
 }
 // Theme toggle
 const toggle = document.getElementById("themeToggle");
@@ -185,3 +190,12 @@ function formatTime(ms) {
   if (minutes > 0) return `${minutes}m`;
   return `${seconds}s`;
 }
+onValue(ref(db, "streakData"), (snapshot) => {
+  const firebaseData = snapshot.val();
+
+  if (firebaseData) {
+    data = firebaseData;
+    updateTimers();
+    updateLeaderboard();
+  }
+});
