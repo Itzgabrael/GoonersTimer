@@ -61,12 +61,12 @@ function confirmReset() {
 
   user.start = Date.now();
 
-  save();
+  saveUser(currentUserToReset);
   closeModal();
 }
 const names = ["Gabriel", "Wisdom", "Kelvin", "Ezekiel"];
 
-let data = JSON.parse(localStorage.getItem("streakData")) || {};
+let data = {};
 
 const usersDiv = document.getElementById("users");
 const leaderboard = document.getElementById("leaderboard");
@@ -157,13 +157,11 @@ function updateLeaderboard() {
   });
 }
 
-function save() {
+function saveUser(name) {
   localStorage.setItem("streakData", JSON.stringify(data));
 
-  // Sync to Firebase
-  set(ref(db, "streakData"), data);
-
-  updateLeaderboard();
+  // save ONLY this user
+  set(ref(db, "streakData/" + name), data[name]);
 }
 // Theme toggle
 const toggle = document.getElementById("themeToggle");
@@ -194,7 +192,13 @@ onValue(ref(db, "streakData"), (snapshot) => {
   const firebaseData = snapshot.val();
 
   if (firebaseData) {
-    data = firebaseData;
+    //merge instead of overwrite
+    names.forEach(name => {
+      if (firebaseData[name]) {
+        data[name] = firebaseData[name];
+      }
+    });
+
     updateTimers();
     updateLeaderboard();
   }
