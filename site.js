@@ -13,8 +13,16 @@ let currentUserToReset = null;
 const usersDiv = document.getElementById("users");
 const leaderboard = document.getElementById("leaderboard");
 
-// ---------------- UI ----------------
+/* ---------------- INIT UI ---------------- */
+function init() {
+  usersDiv.innerHTML = "";
 
+  names.forEach(name => {
+    createUserCard(name);
+  });
+}
+
+/* ---------------- USER CARD ---------------- */
 function createUserCard(name) {
   const div = document.createElement("div");
   div.classList.add("user");
@@ -43,13 +51,49 @@ function createUserCard(name) {
   usersDiv.appendChild(div);
 }
 
-function initUI() {
-  usersDiv.innerHTML = "";
-  names.forEach(createUserCard);
+/* ---------------- TIMER ---------------- */
+function updateTimers() {
+  names.forEach(name => {
+    const el = document.getElementById(`time-${name}`);
+    if (!el || !data[name]) return;
+
+    const now = Date.now();
+
+    const current = now - data[name].start;
+    const best = data[name].best || 0;
+
+    el.innerHTML = `
+      Current: ${formatTime(current)} <br/>
+      Best: ${formatTime(best)}
+    `;
+  });
 }
 
-// ---------------- MODAL ----------------
+/* ---------------- LEADERBOARD ---------------- */
+function updateLeaderboard() {
+  leaderboard.innerHTML = "";
 
+  const sorted = [...names].sort((a, b) => {
+    return (data[b]?.best || 0) - (data[a]?.best || 0);
+  });
+
+  sorted.forEach((name, index) => {
+    const li = document.createElement("li");
+
+    const bestTime = formatTime(data[name]?.best || 0);
+
+    li.innerHTML = `
+      <span>#${index + 1} ${name}</span>
+      <span>${bestTime}</span>
+    `;
+
+    if (index === 0) li.classList.add("top");
+
+    leaderboard.appendChild(li);
+  });
+}
+
+/* ---------------- RESET MODAL ---------------- */
 function showConfirm(name) {
   currentUserToReset = name;
 
@@ -62,9 +106,9 @@ function showConfirm(name) {
 
   modal.innerHTML = `
     <div class="modal-content">
-      <p>Are you sure you want to reset timer?</p>
+      <p>Are you sure you want to reset ${name}'s timer?</p>
       <button id="yesBtn">Yes</button>
-      <button id="noBtn">Exit</button>
+      <button id="noBtn">Cancel</button>
     </div>
   `;
 
@@ -72,6 +116,11 @@ function showConfirm(name) {
 
   document.getElementById("yesBtn").onclick = confirmReset;
   document.getElementById("noBtn").onclick = closeModal;
+
+  // click outside closes
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
 }
 
 function closeModal() {
@@ -80,17 +129,16 @@ function closeModal() {
   currentUserToReset = null;
 }
 
-// ---------------- RESET ----------------
-
+/* ---------------- RESET LOGIC ---------------- */
 function confirmReset() {
   if (!currentUserToReset) return;
 
   const user = data[currentUserToReset];
 
-  const enteredPin = prompt(`Enter passcode for ${currentUserToReset}:`);
+  const pin = prompt(`Enter passcode for ${currentUserToReset}`);
 
-  if (enteredPin !== userPins[currentUserToReset]) {
-    alert("Wrong passcode.");
+  if (pin !== userPins[currentUserToReset]) {
+    alert("Wrong passcode");
     return;
   }
 
@@ -107,80 +155,30 @@ function confirmReset() {
   closeModal();
 }
 
-// ---------------- TIMERS ----------------
-
-function updateTimers() {
-  names.forEach(name => {
-    const el = document.getElementById(`time-${name}`);
-    if (!data[name] || !el) return;
-
-    const now = Date.now();
-    const current = now - data[name].start;
-    const best = data[name].best || 0;
-
-    el.innerHTML = `
-      Current: ${formatTime(current)} <br/>
-      Best: ${formatTime(best)}
-    `;
-  });
-}
-
-// ---------------- LEADERBOARD ----------------
-
-function updateLeaderboard() {
-  leaderboard.innerHTML = "";
-
-  const sorted = [...names].sort(
-    (a, b) => (data[b]?.best || 0) - (data[a]?.best || 0)
-  );
-
-  sorted.forEach((name, index) => {
-    const li = document.createElement("li");
-
-    li.innerHTML = `
-      <span>#${index + 1} ${name}</span>
-      <span>${formatTime(data[name]?.best || 0)}</span>
-    `;
-
-    if (index === 0) li.classList.add("top");
-
-    leaderboard.appendChild(li);
-  });
-}
-
-// ---------------- FIREBASE ----------------
-
+/* ---------------- SAVE ---------------- */
 function saveUser(name) {
   set(ref(db, "streakData/" + name), data[name]);
 }
 
-onValue(ref(db, "streakData"), snapshot => {
-  const firebaseData = snapshot.val();
+/* ---------------- FORMAT TIME ---------------- */
+function formatTime(ms) {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  const months = Math.floor(days / 30);
+  const years = Math.floor(days / 365);
 
-  if (!firebaseData) {
-    data = {};
+  if (years > 0) return `${years}y`;
+  if (months > 0) return `${months}mo`;
+  if (days > 0) return `${days}d`;
+  if (hours > 0) return `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${seconds}s`;
+}
 
-    names.forEach(name => {
-      data[name] = {
-        start: Date.now(),
-        best: 0
-      };
-      saveUser(name);
-    });
-  } else {
-    data = firebaseData;
-  }
-
-  updateTimers();
-  updateLeaderboard();
-});
-
-// ---------------- THEME ----------------
-
+/* ---------------- THEME ---------------- */
 const toggle = document.getElementById("themeToggle");
-
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "light") document.body.classList.add("light");
 
 toggle.onclick = () => {
   document.body.classList.toggle("light");
@@ -189,21 +187,30 @@ toggle.onclick = () => {
   localStorage.setItem("theme", isLight ? "light" : "dark");
 };
 
-// ---------------- UTIL ----------------
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "light") document.body.classList.add("light");
 
-function formatTime(ms) {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const h = Math.floor(m / 60);
-  const d = Math.floor(h / 24);
+/* ---------------- FIREBASE SYNC ---------------- */
+onValue(ref(db, "streakData"), (snapshot) => {
+  const firebaseData = snapshot.val() || {};
 
-  if (d > 0) return `${d}d`;
-  if (h > 0) return `${h}h`;
-  if (m > 0) return `${m}m`;
-  return `${s}s`;
-}
+  names.forEach(name => {
+    if (firebaseData[name]) {
+      data[name] = firebaseData[name];
+    } else {
+      data[name] = {
+        start: Date.now(),
+        best: 0
+      };
 
-// ---------------- START ----------------
+      set(ref(db, "streakData/" + name), data[name]);
+    }
+  });
 
-initUI();
+  updateTimers();
+  updateLeaderboard();
+});
+
+/* ---------------- START APP ---------------- */
+init();
 setInterval(updateTimers, 1000);
