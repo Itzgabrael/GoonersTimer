@@ -143,3 +143,30 @@ body.light #leaderboard li {
 .modal button {
   margin: 10px;
 }
+@media (max-width: 600px) {
+  .container {
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .user {
+    padding: 15px;
+  }
+
+  .user p {
+    font-size: 16px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  #leaderboard li {
+    font-size: 14px;
+  }
+}
