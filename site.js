@@ -19,7 +19,7 @@ function showConfirm(name) {
     <div class="modal-content">
       <p>Gooners!!are you sure you want to reset timer?</p>
       <button id="yesBtn">Yes</button>
-      <button id="noBtn">Cancel</button>
+      <button id="noBtn">Exit</button>
     </div>
   `;
 
@@ -73,18 +73,9 @@ const leaderboard = document.getElementById("leaderboard");
 
 // Initialize users
 function init() {
-  names.forEach(name => {
-    if (!data[name]) {
-      data[name] = {
-        start: Date.now(),
-        best: 0 //store best streak in milliseconds, can be used for future features like "Longest Streak" leaderboard
-      };
-    }
-
+  names.forEach(name => {
     createUserCard(name);
-  });
-
-  updateLeaderboard();
+  });
 }
 
 function createUserCard(name) {
@@ -101,9 +92,12 @@ function createUserCard(name) {
   btn.innerText = "Reset";
   btn.classList.add("reset");
 
-  btn.onclick = () => showConfirm(name);
-    div.classList.add("pulse");
-    setTimeout(() => div.classList.remove("pulse"), 400);
+  btn.onclick = () => {
+  showConfirm(name);
+
+  div.classList.add("pulse");
+  setTimeout(() => div.classList.remove("pulse"), 400);
+};
   
 
   div.appendChild(title);
@@ -158,8 +152,6 @@ function updateLeaderboard() {
 }
 
 function saveUser(name) {
-  localStorage.setItem("streakData", JSON.stringify(data));
-
   // save ONLY this user
   set(ref(db, "streakData/" + name), data[name]);
 }
@@ -168,8 +160,19 @@ const toggle = document.getElementById("themeToggle");
 
 toggle.onclick = () => {
   document.body.classList.toggle("light");
-};
 
+  //save preference
+  const isLight = document.body.classList.contains("light");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+};
+//load saved theme
+const savedTheme = localStorage.getItem("theme");
+
+if (savedTheme === "light") {
+  document.body.classList.add("light");
+} else {
+  document.body.classList.remove("light"); // default dark
+}
 // Run
 init();
 setInterval(updateTimers, 1000);
@@ -192,14 +195,22 @@ onValue(ref(db, "streakData"), (snapshot) => {
   const firebaseData = snapshot.val();
 
   if (firebaseData) {
-    //merge instead of overwrite
+    data = firebaseData; //use Firebase as source of truth
+  } else {
+    // FIRST TIME ONLY (no data in Firebase yet)
     names.forEach(name => {
-      if (firebaseData[name]) {
-        data[name] = firebaseData[name];
-      }
+      data[name] = {
+        start: Date.now(),
+        best: 0
+      };
     });
 
-    updateTimers();
-    updateLeaderboard();
+    // save initial data to Firebase
+    names.forEach(name => {
+      set(ref(db, "streakData/" + name), data[name]);
+    });
   }
+
+  updateTimers();
+  updateLeaderboard();
 });
