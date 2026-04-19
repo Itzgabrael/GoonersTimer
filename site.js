@@ -107,23 +107,21 @@ function createUserCard(name) {
   usersDiv.appendChild(div);
 };
 // Update timers
-function updateTimers() {
+function updateTimers() {
   names.forEach(name => {
-    if (!data[name]) return;
+    const el = document.getElementById(`time-${name}`);
+
+    if (!data[name] || !el) return;
 
     const now = Date.now();
 
     const current = now - data[name].start;
     const best = data[name].best || 0;
 
-    const el = document.getElementById(`time-${name}`);
-
-    if (el) {
-      el.innerHTML = `
-        Current: ${formatTime(current)} <br/>
-        Best: ${formatTime(best)}
-      `;
-    }
+    el.innerHTML = `
+      Current: ${formatTime(current)} <br/>
+      Best: ${formatTime(best)}
+    `;
   });
 }
 
@@ -190,26 +188,26 @@ function formatTime(ms) {
   if (hours > 0) return `${hours}h`;
   if (minutes > 0) return `${minutes}m`;
   return `${seconds}s`;
+updateLeaderboard();
 }
 onValue(ref(db, "streakData"), (snapshot) => {
-  const firebaseData = snapshot.val();
+  const firebaseData = snapshot.val() || {};
 
-  if (firebaseData) {
-    data = firebaseData; //use Firebase as source of truth
-  } else {
-    // FIRST TIME ONLY (no data in Firebase yet)
-    names.forEach(name => {
+  //ALWAYS ensure all users exist
+  names.forEach(name => {
+    if (firebaseData[name]) {
+      data[name] = firebaseData[name];
+    } else {
+      // create missing user
       data[name] = {
         start: Date.now(),
         best: 0
       };
-    });
 
-    // save initial data to Firebase
-    names.forEach(name => {
+      // save it to Firebase
       set(ref(db, "streakData/" + name), data[name]);
-    });
-  }
+    }
+  });
 
   updateTimers();
   updateLeaderboard();
