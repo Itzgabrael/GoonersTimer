@@ -173,6 +173,25 @@ if (savedTheme === "light") {
 }
 // Run
 init();
+updateTimers();function updateTimers() {
+  names.forEach(name => {
+    const el = document.getElementById(`time-${name}`);
+
+    if (!data[name] || !el) return;
+
+    const now = Date.now();
+
+    const current = now - data[name].start;
+    const best = data[name].best || 0;
+
+    el.innerHTML = `
+      Current: ${formatTime(current)} <br/>
+      Best: ${formatTime(best)}
+    `;
+  });
+}
+init();
+updateTimers();
 setInterval(updateTimers, 1000);
 function formatTime(ms) {
   const seconds = Math.floor(ms / 1000);
@@ -191,23 +210,28 @@ function formatTime(ms) {
 updateLeaderboard();
 }
 onValue(ref(db, "streakData"), (snapshot) => {
-  const firebaseData = snapshot.val() || {};
+  const firebaseData = snapshot.val();
 
-  //ALWAYS ensure all users exist
-  names.forEach(name => {
-    if (firebaseData[name]) {
-      data[name] = firebaseData[name];
-    } else {
-      // create missing user
+  if (!firebaseData) {
+    // 🔥 FORCE CREATE DATA
+    data = {};
+
+    names.forEach(name => {
       data[name] = {
         start: Date.now(),
         best: 0
       };
 
-      // save it to Firebase
       set(ref(db, "streakData/" + name), data[name]);
-    }
-  });
+    });
+
+    updateTimers();
+    updateLeaderboard();
+    return;
+  }
+
+  // normal flow
+  data = firebaseData;
 
   updateTimers();
   updateLeaderboard();
