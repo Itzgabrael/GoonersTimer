@@ -170,3 +170,6 @@ body.light #leaderboard li {
     font-size: 14px;
   }
 }
+.user {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
